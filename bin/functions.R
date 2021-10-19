@@ -112,7 +112,9 @@ RUN_DESEQ2 = function(dds){
   library("BiocParallel")
   register(MulticoreParam(12))
   
-  dds = DESeq(dds)
+  dds = DESeq(dds,
+              parallel = T,
+              quiet = T)
   
   return(dds)
   

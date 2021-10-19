@@ -1,0 +1,278 @@
+---
+title: "DESeq2 PRJNA277352 & PRJNA521868"
+author: "YOUR NAME - `r R.Version()$version.string`"
+date: "`r Sys.Date()`"
+output:
+  github_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+Clean work environment and set source file.
+
+```{r}
+
+rm(list = ls())
+gc()
+
+SOURCE="../../../github/PEXPID/bin/functions.R"
+
+```
+
+Import all counts.
+
+```{r}
+
+source(SOURCE)
+
+FILE = "../../../result/count_table_535_samples_16-09-2021.tab"
+
+cts_all = IMPORT_CTS(FILE)
+head(cts_all)
+
+rm(FILE)
+
+```
+
+Import coldata.
+
+```{r}
+
+FILE = "../../../data/coldata_2_BP_MS.csv"
+
+coldata = IMPORT_COLDATA(FILE)
+
+head(coldata)
+
+rm(FILE)
+
+```
+
+Check bioprojects.
+
+```{r}
+
+print("Bioprojects I have:")
+unique(coldata$BioProject)
+
+```
+
+Plot PCA for the bioproject PRJNA277352.
+
+```{r}
+
+source(SOURCE)
+
+BP = "PRJNA277352"
+
+DATA_BP = FILTER_CTS_BY_BP(cts_all,coldata,BP)
+
+dds_BP = CREATE_DDS(DATA_BP)
+
+rld_BP <- rlog(dds_BP, blind=FALSE)
+
+PLOT_PCA(rld_BP,BP)
+
+```
+
+Plot 
+
+```{r}
+
+source(SOURCE)
+
+BP = "PRJNA277352"
+samples2exclude = c("SRR1839803","SRR1839802","SRR1839796","SRR1839797")
+
+DATA_BP = FILTER_CTS_BY_BP(cts_all,coldata,BP,samples2exclude)
+
+dds_BP = CREATE_DDS(DATA_BP)
+
+rld_BP <- rlog(dds_BP, blind=FALSE)
+
+PLOT_PCA(rld_BP,BP)
+
+rm(BP,samples2exclude,DATA_BP,dds_BP,rld_BP)
+
+```
+
+
+
+```{r}
+
+source(SOURCE)
+
+BP = "PRJNA277352"
+samples2exclude = c("SRR1839803","SRR1839802","SRR1839796","SRR1839797")
+
+DATA_BP = FILTER_CTS_BY_BP(cts_all,coldata,BP,samples2exclude)
+
+dds_BP = CREATE_DDS(DATA_BP)
+
+#check design
+design(dds_BP)
+
+dds_BP = RUN_DESEQ2(dds_BP)
+
+RESihw_BP = CREATE_RESihw_OBJECT(dds = dds_BP,
+                                 COND1 = "health",
+                                 COND2 = "RRMS")
+RESihw_BP
+
+plotMA( RESihw_BP, ylim = c(-10, 10) )
+
+plotDispEsts( dds_BP, ylim = c(1e-4, 1e1) )
+
+DF1 = as.data.frame(RESihw_BP)
+
+DF1$BioProject = BP
+
+FILE=paste0("../../../result/DESEQ2/",BP,".tsv")
+write.table(DF1,
+            FILE,
+            sep = "\t")
+
+rm(BP,samples2exclude,DATA_BP,dds_BP,FILE)
+
+```
+
+Plot PCA for the bioproject PRJNA277352.
+
+```{r}
+
+source(SOURCE)
+
+BP = "PRJNA521868"
+
+DATA_BP = FILTER_CTS_BY_BP(cts_all,coldata,BP)
+
+dds_BP = CREATE_DDS(DATA_BP)
+
+rld_BP <- rlog(dds_BP, blind=FALSE)
+
+PLOT_PCA(rld_BP,BP)
+
+```
+
+
+
+```{r}
+
+source(SOURCE)
+
+BP = "PRJNA521868"
+samples2exclude = c("SRR8564870")
+
+DATA_BP = FILTER_CTS_BY_BP(cts_all,coldata,BP,samples2exclude)
+
+dds_BP = CREATE_DDS(DATA_BP)
+
+rld_BP <- rlog(dds_BP, blind=FALSE)
+
+PLOT_PCA(rld_BP,BP)
+
+rm(BP,samples2exclude,DATA_BP,dds_BP,rld_BP)
+
+```
+
+
+
+```{r}
+
+source(SOURCE)
+
+BP = "PRJNA521868"
+samples2exclude = c("SRR8564870")
+
+DATA_BP = FILTER_CTS_BY_BP(cts_all,coldata,BP,samples2exclude)
+
+dds_BP = CREATE_DDS(DATA_BP)
+
+#check design
+design(dds_BP)
+
+dds_BP = RUN_DESEQ2(dds_BP)
+
+RESihw_BP = CREATE_RESihw_OBJECT(dds = dds_BP,
+                                 COND1 = "health",
+                                 COND2 = "MS")
+
+RESihw_BP
+
+plotMA( RESihw_BP, ylim = c(-10, 10) )
+
+plotDispEsts( dds_BP, ylim = c(1e-4, 1e1) )
+
+DF2 = as.data.frame(RESihw_BP)
+
+DF2$BioProject = BP
+
+FILE=paste0("../../../result/DESEQ2/",BP,".tsv")
+write.table(DF2,
+            FILE,
+            sep = "\t")
+
+rm(BP,samples2exclude,DATA_BP,dds_BP,FILE)
+
+```
+
+
+
+```{r}
+
+library(dplyr)
+
+nrow(DF1 %>% filter(padj <= 0.01))
+
+nrow(DF2 %>% filter(padj <= 0.01))
+
+```
+
+
+```{r}
+
+library(dplyr)
+
+G1 = DF1 %>% filter(padj <= 0.05)  %>%
+      select(ensembl)
+
+G2 = DF2 %>% filter(padj <= 0.05) %>%
+      select(ensembl)
+
+G = G1[G1$ensembl %in% G2$ensembl,]
+G
+
+DF1 %>% filter(ensembl == G)
+DF2 %>% filter(ensembl == G)
+
+rm(G,G1,G2)
+
+```
+
+elaborar código para fazer a comparação declarando apenas a característica de base na comparação.
+
+Não consegui instalar o clusterProfile no sevidor. Vou continuar na minha máquina.
+
+```{r}
+
+# suppressPackageStartupMessages(library(dplyr))
+# suppressPackageStartupMessages(library(ggplot2))
+# suppressPackageStartupMessages(library(org.Hs.eg.db))
+# suppressPackageStartupMessages(library(clusterProfiler)) # it needs R version 4.1.1
+
+```
+
+Export results.
+
+```{r}
+
+DF_Exp = rbind(DF1,DF2)
+
+FILE="../../../result/DESEQ2/DF_Exp_2_bioprojects.tsv"
+write.table(DF_Exp,FILE,sep = "\t")
+
+rm(DF_Exp,FILE)
+
+```
+
+
